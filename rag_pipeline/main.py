@@ -8,11 +8,13 @@ import uvicorn
 from fastapi.responses import JSONResponse
 import json
 from recommendation_system import RecommendationSystem
-from config import PDF_PATH
 import pandas as pd
 import numpy as np
 
 app = FastAPI()
+
+# Initialize recommendation system
+recommendation_system = RecommendationSystem(data_path="data/products.csv")
 
 # In-memory session store
 sessions = {}
@@ -49,8 +51,6 @@ def query_handler(request: QueryRequest, user_id: str = Header(..., alias="user-
         "question": request.question,
         "answer": parsed_answer
     })
-
-recommendation_system = RecommendationSystem()
 
 def convert_numpy_types(obj):
     if isinstance(obj, np.integer):

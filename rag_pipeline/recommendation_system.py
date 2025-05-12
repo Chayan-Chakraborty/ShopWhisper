@@ -2,27 +2,29 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 from typing import List, Dict, Any
-from pdf_processor import get_products
 from datetime import datetime, timedelta
 import random
 from ai_analyzer import AIAnalyzer
 import json
 import openai
-from config import PDF_PATH
 
 class RecommendationSystem:
-    def __init__(self, pdf_path: str = PDF_PATH):
+    def __init__(self, data_path: str = "data/products.csv"):
         try:
-            # Get products from PDF
-            products_list = get_products(pdf_path)
-            self.products = pd.DataFrame(products_list)
+            # Load products directly from CSV
+            print("Loading products from CSV...")
+            self.products = pd.read_csv(data_path)
+            print(f"Loaded {len(self.products)} products")
+            
+            # Initialize in-memory order history
+            print("Generating dummy orders...")
+            self.order_history = self._generate_dummy_orders()
+            print(f"Generated {len(self.order_history)} orders")
+            
         except FileNotFoundError:
-            print(f"Warning: Products PDF not found at {pdf_path}. Using empty product list.")
+            print(f"Warning: Products CSV not found at {data_path}. Using empty product list.")
             self.products = pd.DataFrame([])
             
-        # Initialize in-memory order history
-        self.order_history = self._generate_dummy_orders()
-        
         # Initialize AI analyzer
         self.ai_analyzer = AIAnalyzer()
         
@@ -61,9 +63,9 @@ class RecommendationSystem:
                 'order_id': f"ORD_{len(orders)+1}",
                 'user_id': user_id,
                 'product_id': product['ID'],
-                'product_name': product['Product_Name'],
+                'product_name': product['Product Name'],
                 'category': product['Category'],
-                'sub_category': product['Sub_Category'],
+                'sub_category': product['Sub-Category'],
                 'brand': product['Brand'],
                 'quantity': quantity,
                 'price_per_unit': product['Price'],
@@ -88,16 +90,24 @@ class RecommendationSystem:
     
     def get_recommendations(self, user_id: str, num_recommendations: int = 5) -> List[Dict[str, Any]]:
         """Get AI-powered product recommendations"""
+        print(f"Getting recommendations for user {user_id}")
+        
         if self.products.empty:
+            print("No products available")
             return []
             
         # Get user's behavior analysis
         user_analysis = self.analyze_user_behavior(user_id)
+        print(f"User analysis: {user_analysis}")
         
         if user_analysis["user_type"] == "new":
-            return self._get_basic_recommendations(user_analysis, num_recommendations)
+            print("New user, getting basic recommendations")
+            recommendations = self._get_basic_recommendations(user_analysis, num_recommendations)
+            print(f"Generated {len(recommendations)} basic recommendations")
+            return recommendations
         
         try:
+            print("Getting AI recommendations")
             # Get AI recommendations
             client = openai.OpenAI()
             response = client.chat.completions.create(
@@ -115,6 +125,7 @@ class RecommendationSystem:
             
             # Parse AI recommendations
             ai_recommendations = json.loads(response.choices[0].message.content)
+            print(f"Got {len(ai_recommendations.get('recommendations', []))} AI recommendations")
             
             # Convert to final format with multiple reasons
             recommendations = []
@@ -129,17 +140,30 @@ class RecommendationSystem:
                     'confidence_score': rec['confidence_score'],
                     'reasons': rec['reasons'] if isinstance(rec['reasons'], list) else [rec['reasoning']]
                 })
-                
+            
+            print(f"Returning {len(recommendations)} AI recommendations")
             return recommendations
             
         except Exception as e:
             print(f"Error getting AI recommendations: {str(e)}")
+            print("Falling back to basic recommendations")
             # Fallback to basic recommendations
-            return self._get_basic_recommendations(user_analysis, num_recommendations)
+            recommendations = self._get_basic_recommendations(user_analysis, num_recommendations)
+            print(f"Generated {len(recommendations)} fallback recommendations")
+            return recommendations
     
     def _get_basic_recommendations(self, user_analysis: Dict[str, Any], num_recommendations: int = 5) -> List[Dict[str, Any]]:
         """Fallback method for basic recommendations"""
+        print("Starting basic recommendations")
         recommendations = []
+        
+        if self.products.empty:
+            print("No products available for basic recommendations")
+            return []
+            
+        if self.order_history.empty:
+            print("No order history available for basic recommendations")
+            return []
         
         # Get product stats for scoring
         product_stats = self.order_history.groupby('product_id').agg({
@@ -147,6 +171,7 @@ class RecommendationSystem:
             'rating': ['mean', 'count']
         }).reset_index()
         product_stats.columns = ['product_id', 'order_count', 'avg_rating', 'rating_count']
+        print(f"Calculated stats for {len(product_stats)} products")
         
         for _, product in self.products.iterrows():
             stats = product_stats[product_stats['product_id'] == product['ID']].iloc[0] if len(product_stats[product_stats['product_id'] == product['ID']]) > 0 else None
@@ -165,6 +190,14 @@ class RecommendationSystem:
                     score += 1
                     reasons.append(f"Well rated with {stats['avg_rating']:.1f}/5 stars")
             
+            # Add rating-based reasons from CSV
+            if product['Rating'] >= 4.5:
+                score += 1.5
+                reasons.append(f"Excellent customer rating of {product['Rating']}/5")
+            elif product['Rating'] >= 4.0:
+                score += 1
+                reasons.append(f"High customer rating of {product['Rating']}/5")
+            
             # Add category-based reasons
             if product['Category'] == 'Plywood':
                 if product['Price'] < 1500:
@@ -173,6 +206,12 @@ class RecommendationSystem:
                 elif product['Price'] >= 2000:
                     reasons.append("Premium quality plywood")
                     score += 0.5
+                if product['Waterproof'] == 'Yes':
+                    reasons.append("Waterproof plywood suitable for wet areas")
+                    score += 0.5
+                if product['Termite-Proof'] == 'Yes':
+                    reasons.append("Termite-resistant for longer life")
+                    score += 0.5
             elif product['Category'] == 'Hardware':
                 if product['Price'] < 50:
                     reasons.append("Essential hardware at competitive price")
@@ -180,35 +219,42 @@ class RecommendationSystem:
             
             # Add brand-based reasons
             if product['Brand'] in ['GreenPly', 'Century', 'Kitply']:
-                reasons.append("From a trusted manufacturer")
+                reasons.append("From a trusted plywood manufacturer")
                 score += 0.5
             elif product['Brand'] in ['Hafele', 'Hettich']:
-                reasons.append("Premium brand known for quality")
+                reasons.append("Premium hardware brand known for quality")
                 score += 0.5
             
-            # Add price-based reasons
-            similar_products = self.products[self.products['Category'] == product['Category']]
-            avg_price = similar_products['Price'].mean()
-            if product['Price'] < avg_price * 0.8:
-                reasons.append("Great value for money")
+            # Add discount-based reasons
+            if product['Discount'] != '0%':
+                reasons.append(f"Special {product['Discount']} discount available")
                 score += 0.5
+            
+            # Add stock-based reasons
+            if product['Stock'] < 50:
+                reasons.append("Limited stock available")
+                score += 0.3
             
             if reasons:  # Only add products with at least one reason
                 recommendations.append({
                     'product_id': product['ID'],
-                    'product_name': product['Product_Name'],
+                    'product_name': product['Product Name'],
                     'category': product['Category'],
                     'brand': product['Brand'],
                     'price': product['Price'],
-                    'order_count': int(stats['order_count']) if stats is not None else 0,
-                    'avg_rating': float(stats['avg_rating']) if stats is not None and not pd.isna(stats['avg_rating']) else None,
+                    'rating': float(product['Rating']),
+                    'discount': product['Discount'],
+                    'stock': int(product['Stock']),
                     'confidence_score': min(score / 5, 1),  # Normalize to 0-1
                     'reasons': reasons
                 })
         
         # Sort by score and return top recommendations
         recommendations.sort(key=lambda x: x['confidence_score'], reverse=True)
-        return recommendations[:num_recommendations]
+        print(f"Generated {len(recommendations)} recommendations before filtering")
+        final_recommendations = recommendations[:num_recommendations]
+        print(f"Returning {len(final_recommendations)} final recommendations")
+        return final_recommendations
     
     def get_popular_products(self, num_products: int = 5) -> List[Dict[str, Any]]:
         """Get popular products based on all users' order history"""

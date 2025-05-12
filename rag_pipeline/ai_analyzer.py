@@ -4,13 +4,14 @@ from typing import Dict, Any, List
 import os
 from dotenv import load_dotenv
 import json
+from config import OPENAI_API_KEY
 
 load_dotenv()  # Load environment variables from .env file
 
 class AIAnalyzer:
     def __init__(self):
         """Initialize the AI analyzer with OpenAI client"""
-        openai.api_key = os.getenv('OPENAI_API_KEY')
+        openai.api_key = OPENAI_API_KEY
         
     def analyze_user_behavior(self, user_orders: pd.DataFrame) -> Dict[str, Any]:
         """

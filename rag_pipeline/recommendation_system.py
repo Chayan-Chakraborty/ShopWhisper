@@ -8,9 +8,10 @@ import random
 from ai_analyzer import AIAnalyzer
 import json
 import openai
+from config import PDF_PATH
 
 class RecommendationSystem:
-    def __init__(self, pdf_path: str = "products.pdf"):
+    def __init__(self, pdf_path: str = PDF_PATH):
         try:
             # Get products from PDF
             products_list = get_products(pdf_path)

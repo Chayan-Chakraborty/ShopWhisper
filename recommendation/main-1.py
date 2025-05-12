@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Header
 from typing import List, Dict, Any, Optional
-from recommendation_system import RecommendationSystem
+from rag_pipeline.recommendation_system import RecommendationSystem
 import uvicorn
 
 app = FastAPI(title="Product Recommendation API",

@@ -21,14 +21,7 @@ class Category(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(String(1000))
-    catalogue_pdf = Column(Text)
-    image_urls = Column(Text)
     is_active = Column(Boolean, default=True, nullable=False)
-    meta_keywords = Column(String(255))
-    created_by = Column(BigInteger)
-    updated_by = Column(BigInteger)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     identifier = Column(String(255), unique=True, nullable=False)
     sku_prefix = Column(String(13), unique=True, nullable=False)
 
@@ -43,8 +36,6 @@ class GlobalAttribute(Base):
     name = Column(String(255), nullable=False)
     type = Column(String(100))
     description = Column(String(1000))
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     category_attributes = relationship("CategoryAttribute", back_populates="global_attribute")
 
@@ -54,8 +45,6 @@ class CategoryBrandIndex(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     products = relationship("Product", back_populates="category_brand_index")
 
@@ -68,13 +57,8 @@ class Product(Base):
     name = Column(String(255), unique=True, nullable=False)
     category_id = Column(BigInteger, ForeignKey('category.id'))
     description = Column(String(1000))
-    image_urls = Column(Text)
     mrp = Column(Double)
     status = Column(String(255), nullable=False)
-    created_by = Column(BigInteger)
-    updated_by = Column(BigInteger)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     per_unit_mrp_price = Column(Double)
     unit_type = Column(String(255))
     per_unit_selling_price = Column(Double)
@@ -97,13 +81,6 @@ class CategoryAttribute(Base):
     global_attribute_id = Column(BigInteger, ForeignKey('global_attribute.id'))
     is_mandate = Column(Boolean)
     filter_values = Column(Text)
-    created_by = Column(BigInteger)
-    updated_by = Column(BigInteger)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    is_searchable = Column(Boolean)
-    is_filterable = Column(Boolean)
-    sequence_id = Column(BigInteger)
 
     category = relationship("Category", back_populates="category_attributes")
     global_attribute = relationship("GlobalAttribute", back_populates="category_attributes")
@@ -119,10 +96,6 @@ class ProductAttribute(Base):
     description = Column(String(1000))
     variant_tag = Column(String(255))
     value = Column(String(1000), nullable=False)
-    created_by = Column(BigInteger)
-    updated_by = Column(BigInteger)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     sequence_id = Column(BigInteger)
 
     product = relationship("Product", back_populates="attributes")

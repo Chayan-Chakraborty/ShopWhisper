@@ -3,7 +3,7 @@ from retriever import Retriever
 from generator import generate_answer
 
 def main():
-    chunks = load_and_split_csv("Dummy Data Pdf - Sheet1.csv")
+    chunks = load_and_split_csv("/Users/chayanchakraborty/Downloads/Dummy Data Pdf - Sheet1.csv")
     
     retriever = Retriever(chunks)
 

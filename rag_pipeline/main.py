@@ -10,6 +10,7 @@ import json
 from recommendation_system import RecommendationSystem
 import pandas as pd
 import numpy as np
+from config import PDF_PATH
 
 app = FastAPI()
 

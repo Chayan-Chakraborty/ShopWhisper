@@ -9,7 +9,8 @@ def main():
     texts, ids = build_product_search_corpus(session)
     index, _ = build_faiss_index(texts)
 
-    keywords = input("Enter search keywords (space-separated): ").split()
+    # keywords = input("Enter search keywords (space-separated): ").split()
+    keywords = ["plywood"]
     query = ' '.join(keywords)
 
     results = search_products(keywords, index, texts, ids, session)

@@ -9,7 +9,7 @@ from datetime import datetime
 Base = declarative_base()
 
 # DB Connection (replace with your actual credentials)
-DATABASE_URL = "mysql+pymysql://username:password@localhost:3306/your_database"
+DATABASE_URL = "mysql+pymysql://root:Chayan%401340@localhost:3306/suchi"
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()

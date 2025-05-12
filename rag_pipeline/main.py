@@ -1,12 +1,11 @@
-from document_loader import load_and_split
+from document_loader import load_and_split_csv
 from retriever import Retriever
 from generator import generate_answer
 
 def main():
-    chunks = load_and_split("my_docs/data.txt")
-    texts = [chunk.page_content for chunk in chunks]
-
-    retriever = Retriever(texts)
+    chunks = load_and_split_csv("Dummy Data Pdf - Sheet1.csv")
+    
+    retriever = Retriever(chunks)
 
     while True:
         query = input("\nAsk a question (or type 'exit'): ")

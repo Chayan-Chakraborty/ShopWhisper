@@ -9,7 +9,9 @@ from fastapi.responses import JSONResponse
 import json
 from recommendation_system import RecommendationSystem
 from config import PDF_PATH
-    
+import pandas as pd
+import numpy as np
+
 app = FastAPI()
 
 # In-memory session store
@@ -50,20 +52,48 @@ def query_handler(request: QueryRequest, user_id: str = Header(..., alias="user-
 
 recommendation_system = RecommendationSystem()
 
+def convert_numpy_types(obj):
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    return obj
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Product Recommendation API"}
 
-@app.get("/user/behavior", response_model=Dict[str, Any])
-async def get_user_behavior(user_id: str = Header(..., alias="user-id")):
-    """
-    Analyze and return user's purchasing behavior based on their user ID.
-    """
-    print(user_id)
+@app.get("/api/user/behavior")
+async def get_user_behavior(user_id: Optional[str] = Header(None)):
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    
     try:
-        return recommendation_system.analyze_user_behavior(user_id)
+        # Clean user_id to ensure it's just the number
+        user_id = str(user_id).replace('USER_', '')
+        
+        # Get recommended products based on behavior
+        recommendations = recommendation_system.get_recommendations(user_id, num_recommendations=5)
+        
+        # Convert NumPy types and ensure reasons is a list
+        converted_recommendations = convert_numpy_types(recommendations)
+        for rec in converted_recommendations:
+            if isinstance(rec.get('reasons'), str):
+                rec['reasons'] = [rec['reasons']]
+            elif not isinstance(rec.get('reasons'), list):
+                rec['reasons'] = []
+        
+        return {
+            "recommended_products": converted_recommendations
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to analyze user behavior: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/user/recommendations", response_model=List[Dict[str, Any]])
 async def get_recommendations(

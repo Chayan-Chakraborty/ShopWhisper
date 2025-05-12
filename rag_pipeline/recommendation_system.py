@@ -36,10 +36,10 @@ class RecommendationSystem:
         start_date = end_date - timedelta(days=365)
         
         # Generate 1000 random orders
-        user_ids = [f"USER_{i}" for i in range(1, 101)]  # 100 users
+        user_ids = list(range(1, 101))  # 100 users with IDs from 1 to 100
         
         for _ in range(1000):
-            user_id = random.choice(user_ids)
+            user_id = str(random.choice(user_ids))  # Convert to string for consistency
             product = self.products.iloc[random.randint(0, len(self.products)-1)]
             
             # Generate order date
@@ -77,6 +77,8 @@ class RecommendationSystem:
         
     def get_user_orders(self, user_id: str) -> pd.DataFrame:
         """Get order history for a specific user"""
+        # Handle both string and integer user IDs
+        user_id = str(user_id).replace('USER_', '')  # Remove USER_ prefix if present
         return self.order_history[self.order_history['user_id'] == user_id].copy()
         
     def analyze_user_behavior(self, user_id: str) -> Dict[str, Any]:
@@ -89,24 +91,23 @@ class RecommendationSystem:
         if self.products.empty:
             return []
             
-        # Get AI analysis of user behavior
+        # Get user's behavior analysis
         user_analysis = self.analyze_user_behavior(user_id)
         
         if user_analysis["user_type"] == "new":
-            return self.get_popular_products(num_recommendations)
+            return self._get_basic_recommendations(user_analysis, num_recommendations)
         
         try:
             # Get AI recommendations
-            prompt = self.ai_analyzer.get_recommendation_prompt(
-                user_analysis,
-                self.products.to_dict('records')
-            )
-            
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI()
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are a retail recommendation expert."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": self.ai_analyzer.get_recommendation_prompt(
+                        user_analysis,
+                        self.products.to_dict('records')
+                    )}
                 ],
                 temperature=0.7,
                 max_tokens=1000
@@ -115,7 +116,7 @@ class RecommendationSystem:
             # Parse AI recommendations
             ai_recommendations = json.loads(response.choices[0].message.content)
             
-            # Convert to final format
+            # Convert to final format with multiple reasons
             recommendations = []
             for rec in ai_recommendations["recommendations"][:num_recommendations]:
                 product = self.products[self.products['ID'] == int(rec['product_id'])].iloc[0]
@@ -126,7 +127,7 @@ class RecommendationSystem:
                     'brand': product['Brand'],
                     'price': product['Price'],
                     'confidence_score': rec['confidence_score'],
-                    'reason': rec['reasoning']
+                    'reasons': rec['reasons'] if isinstance(rec['reasons'], list) else [rec['reasoning']]
                 })
                 
             return recommendations
@@ -139,30 +140,71 @@ class RecommendationSystem:
     def _get_basic_recommendations(self, user_analysis: Dict[str, Any], num_recommendations: int = 5) -> List[Dict[str, Any]]:
         """Fallback method for basic recommendations"""
         recommendations = []
-        preferred_categories = user_analysis['preferences'].get('preferred_categories', [])
-        preferred_brands = user_analysis['preferences'].get('preferred_brands', [])
+        
+        # Get product stats for scoring
+        product_stats = self.order_history.groupby('product_id').agg({
+            'order_id': 'count',
+            'rating': ['mean', 'count']
+        }).reset_index()
+        product_stats.columns = ['product_id', 'order_count', 'avg_rating', 'rating_count']
         
         for _, product in self.products.iterrows():
-            score = 0
+            stats = product_stats[product_stats['product_id'] == product['ID']].iloc[0] if len(product_stats[product_stats['product_id'] == product['ID']]) > 0 else None
             reasons = []
+            score = 0
             
-            if product['Category'] in preferred_categories:
-                score += 2
-                reasons.append(f"Matches your preferred category: {product['Category']}")
-                
-            if product['Brand'] in preferred_brands:
-                score += 1
-                reasons.append(f"From your preferred brand: {product['Brand']}")
-                
-            recommendations.append({
-                'product_id': product['ID'],
-                'product_name': product['Product_Name'],
-                'category': product['Category'],
-                'brand': product['Brand'],
-                'price': product['Price'],
-                'confidence_score': min(score / 3, 1),  # Normalize to 0-1
-                'reason': " • ".join(reasons) if reasons else "Based on your shopping patterns"
-            })
+            # Add popularity-based reasons
+            if stats is not None:
+                if stats['order_count'] > 100:
+                    score += 2
+                    reasons.append(f"Highly popular with {int(stats['order_count'])} recent orders")
+                if stats['avg_rating'] >= 4.0 and stats['rating_count'] > 50:
+                    score += 1.5
+                    reasons.append(f"Highly rated with {stats['avg_rating']:.1f}/5 stars")
+                elif stats['avg_rating'] >= 3.5 and stats['rating_count'] > 20:
+                    score += 1
+                    reasons.append(f"Well rated with {stats['avg_rating']:.1f}/5 stars")
+            
+            # Add category-based reasons
+            if product['Category'] == 'Plywood':
+                if product['Price'] < 1500:
+                    reasons.append("Affordable plywood option")
+                    score += 0.5
+                elif product['Price'] >= 2000:
+                    reasons.append("Premium quality plywood")
+                    score += 0.5
+            elif product['Category'] == 'Hardware':
+                if product['Price'] < 50:
+                    reasons.append("Essential hardware at competitive price")
+                    score += 0.5
+            
+            # Add brand-based reasons
+            if product['Brand'] in ['GreenPly', 'Century', 'Kitply']:
+                reasons.append("From a trusted manufacturer")
+                score += 0.5
+            elif product['Brand'] in ['Hafele', 'Hettich']:
+                reasons.append("Premium brand known for quality")
+                score += 0.5
+            
+            # Add price-based reasons
+            similar_products = self.products[self.products['Category'] == product['Category']]
+            avg_price = similar_products['Price'].mean()
+            if product['Price'] < avg_price * 0.8:
+                reasons.append("Great value for money")
+                score += 0.5
+            
+            if reasons:  # Only add products with at least one reason
+                recommendations.append({
+                    'product_id': product['ID'],
+                    'product_name': product['Product_Name'],
+                    'category': product['Category'],
+                    'brand': product['Brand'],
+                    'price': product['Price'],
+                    'order_count': int(stats['order_count']) if stats is not None else 0,
+                    'avg_rating': float(stats['avg_rating']) if stats is not None and not pd.isna(stats['avg_rating']) else None,
+                    'confidence_score': min(score / 5, 1),  # Normalize to 0-1
+                    'reasons': reasons
+                })
         
         # Sort by score and return top recommendations
         recommendations.sort(key=lambda x: x['confidence_score'], reverse=True)

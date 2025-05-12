@@ -11,7 +11,7 @@ You are a structured information extractor.
 Given the context below and the question, extract the complete product information and return a JSON object.
 
 Make sure to include all relevant fields for each product, such as:
-- name, type, properties, wood_type, thickness, dimensions, color, price, brand, eco_friendly, fire_resistant, termite_resistant, recommended_for, rating, discount, stock.
+-ID, name, type, properties, wood_type, thickness, dimensions, color, price, brand, eco_friendly, fire_resistant, termite_resistant, recommended_for, rating, discount, stock, isSponsored.
 
 Return only a valid JSON object inside a dictionary with the key "products", like this:
 

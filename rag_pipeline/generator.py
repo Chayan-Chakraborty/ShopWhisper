@@ -4,7 +4,7 @@ import json
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def generate_answer(context: str, query: str) -> dict:
+def generate_answer(context: str, query: str) -> str:
     prompt = f"""
 You are a structured information extractor.
 
@@ -13,24 +13,38 @@ Given the context below and the question, extract the complete product informati
 Make sure to include all relevant fields for each product, such as:
 - name, type, properties, wood_type, thickness, dimensions, color, price, brand, eco_friendly, fire_resistant, termite_resistant, recommended_for, rating, discount, stock.
 
-Respond only in a valid JSON object with proper formatting (use numbers for price, rating, and stock).
+Return only a valid JSON object inside a dictionary with the key "products", like this:
+
+{{
+  "products": [
+    {{
+      "name": "...",
+      "type": "...",
+      ...
+    }},
+    ...
+  ]
+}}
+
+Use proper JSON formatting with double quotes and numeric values as numbers (no commas in numbers).
 
 Context:
 {context}
 
 Question: {query}
-Return only a valid JSON object.
 """
 
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        messages=[{"role": "user", "content": prompt}]
     )
 
-    # Try to parse the response into JSON (optional)
+    raw_text = response.choices[0].message.content.strip()
+
     try:
-        return json.loads(response.choices[0].message.content)
+        # Parse and re-dump to enforce valid JSON formatting (double quotes, etc.)
+        parsed = json.loads(raw_text)
+        return json.dumps(parsed, indent=2)
     except json.JSONDecodeError:
-        return {"error": "Could not parse JSON", "raw_response": response.choices[0].message.content}
+        # If not parseable, return raw text for debugging
+        return json.dumps({"error": "Could not parse JSON", "raw_response": raw_text}, indent=2)

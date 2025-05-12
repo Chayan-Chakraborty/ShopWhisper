@@ -1,10 +1,10 @@
 import faiss
 import numpy as np
 from embeddings import get_embedding
-import product
+import Product
 
 def build_product_corpus(session):
-    products = session.query(product).all()
+    products = session.query(Product).all()
     texts, ids = [], []
 
     for available_product in products:

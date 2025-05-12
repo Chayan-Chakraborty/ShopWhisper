@@ -1,0 +1,9 @@
+ID,Product Name,Category,Sub-Category,Material,Thickness,Size,Color,Price,Brand,Waterproof,Termite-Proof,Fire-Rated,Usage,Rating,Discount,Stock,isSponsored
+1,BWP Marine Plywood 18mm,Plywood,Waterproof,Hardwood,18mm,8x4 ft,Brown,1650,GreenPly,Yes,Yes,No,Bathrooms Boats,4.7,5%,50,TRUE
+2,MR Commercial Plywood 12mm,Plywood,Interior,Softwood,12mm,8x4 ft,Light Brown,1100,Century,No,No,No,Furniture,4.2,0%,120,TRUE
+3,Matte White MDF Laminate,Laminate,Decorative,MDF,1mm,8x4 ft,White,95,Merino,No,No,Yes,Cabinets,4.8,10%,200,FALSE
+4,Teak Veneer Plywood 19mm,Plywood,Premium,Teak,19mm,8x4 ft,Golden,2400,Kitply,Yes,Yes,Yes,Luxury Furniture,4.9,15%,35,FALSE
+5,Aluminum Cabinet Handles,Hardware,Handles,Aluminum,-,128mm,Silver,25,Hafele,Yes,No,No,Kitchen Cabinets,4.5,20%,500,TRUE
+6,8-Seater Dining Set (MDF),Furniture,Dining,MDF+Metal,-,96x48 in,Black,34999,Durian,No,No,No,Dining Room,4.6,30%,8,TRUE
+7,PVC Edge Banding 2mm,Laminate,Edge Finish,PVC,2mm,100m roll,White,320,Sunmica,Yes,No,No,Plywood Edging,4,5%,150,FALSE
+8,Anti-Termite Adhesive 1kg,Adhesive,Construction,PVA,-,1kg pack,White,28,Fevicol,Yes,Yes,No,Wood Bonding,4.7,0%,80,TRUE 

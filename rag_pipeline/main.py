@@ -91,4 +91,4 @@ async def get_popular_products(num_products: int = 5):
        
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8081)

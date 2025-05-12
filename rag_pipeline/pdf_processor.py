@@ -20,8 +20,8 @@ class CSVProcessor:
             # Read the CSV file into a DataFrame
             df = pd.read_csv(self.csv_path)
 
-            # Clean column names (strip whitespace and replace spaces with underscores)
-            df.columns = df.columns.str.strip().str.replace(' ', '_')
+            # Clean column names (strip whitespace, replace spaces and hyphens with underscores)
+            df.columns = df.columns.str.strip().str.replace(' ', '_').str.replace('-', '_')
 
             # Convert DataFrame rows to dictionaries
             products = df.to_dict(orient="records")

@@ -173,24 +173,35 @@ class RecommendationSystem:
         product_stats.columns = ['product_id', 'order_count', 'avg_rating', 'rating_count']
         print(f"Calculated stats for {len(product_stats)} products")
         
+        # Get user preferences from analysis
+        preferred_categories = user_analysis.get('preferences', {}).get('preferred_categories', [])
+        preferred_brands = user_analysis.get('preferences', {}).get('preferred_brands', [])
+        price_sensitivity = user_analysis.get('preferences', {}).get('price_sensitivity', 'medium')
+        quality_preference = user_analysis.get('preferences', {}).get('quality_preference', 'medium')
+        
+        # Get user's purchased products to avoid immediate repeats
+        purchased_products = {item['product_name'] for item in user_analysis.get('purchased_products', [])}
+        
         for _, product in self.products.iterrows():
+            # Skip if user recently purchased this product
+            if product['Product Name'] in purchased_products:
+                continue
+                
             stats = product_stats[product_stats['product_id'] == product['ID']].iloc[0] if len(product_stats[product_stats['product_id'] == product['ID']]) > 0 else None
             reasons = []
             score = 0
             
-            # Add popularity-based reasons
-            if stats is not None:
-                if stats['order_count'] > 100:
-                    score += 2
-                    reasons.append(f"Highly popular with {int(stats['order_count'])} recent orders")
-                if stats['avg_rating'] >= 4.0 and stats['rating_count'] > 50:
-                    score += 1.5
-                    reasons.append(f"Highly rated with {stats['avg_rating']:.1f}/5 stars")
-                elif stats['avg_rating'] >= 3.5 and stats['rating_count'] > 20:
-                    score += 1
-                    reasons.append(f"Well rated with {stats['avg_rating']:.1f}/5 stars")
+            # Add category preference reasons
+            if product['Category'] in preferred_categories:
+                score += 2
+                reasons.append(f"Matches your frequently purchased category: {product['Category']}")
             
-            # Add rating-based reasons from CSV
+            # Add brand preference reasons
+            if product['Brand'] in preferred_brands:
+                score += 1.5
+                reasons.append(f"From {product['Brand']}, one of your preferred brands")
+            
+            # Add rating-based reasons
             if product['Rating'] >= 4.5:
                 score += 1.5
                 reasons.append(f"Excellent customer rating of {product['Rating']}/5")
@@ -198,14 +209,26 @@ class RecommendationSystem:
                 score += 1
                 reasons.append(f"High customer rating of {product['Rating']}/5")
             
-            # Add category-based reasons
+            # Add price sensitivity based reasons
+            avg_category_price = self.products[self.products['Category'] == product['Category']]['Price'].mean()
+            if price_sensitivity == 'high' and product['Price'] < avg_category_price:
+                score += 1
+                reasons.append("Competitively priced for its category")
+            elif price_sensitivity == 'low' and product['Price'] > avg_category_price:
+                score += 1
+                reasons.append("Premium quality product")
+            
+            # Add quality preference based reasons
+            if quality_preference == 'high':
+                if product['Rating'] >= 4.5:
+                    score += 1
+                    reasons.append("Meets your preference for high-quality products")
+                if product['Brand'] in ['GreenPly', 'Century', 'Kitply', 'Hafele', 'Hettich']:
+                    score += 0.5
+                    reasons.append("From a premium quality manufacturer")
+            
+            # Add category-specific features
             if product['Category'] == 'Plywood':
-                if product['Price'] < 1500:
-                    reasons.append("Affordable plywood option")
-                    score += 0.5
-                elif product['Price'] >= 2000:
-                    reasons.append("Premium quality plywood")
-                    score += 0.5
                 if product['Waterproof'] == 'Yes':
                     reasons.append("Waterproof plywood suitable for wet areas")
                     score += 0.5
@@ -216,14 +239,6 @@ class RecommendationSystem:
                 if product['Price'] < 50:
                     reasons.append("Essential hardware at competitive price")
                     score += 0.5
-            
-            # Add brand-based reasons
-            if product['Brand'] in ['GreenPly', 'Century', 'Kitply']:
-                reasons.append("From a trusted plywood manufacturer")
-                score += 0.5
-            elif product['Brand'] in ['Hafele', 'Hettich']:
-                reasons.append("Premium hardware brand known for quality")
-                score += 0.5
             
             # Add discount-based reasons
             if product['Discount'] != '0%':

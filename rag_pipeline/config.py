@@ -1,13 +1,13 @@
-OPENAI_API_KEY = "your-api-key"
+OPENAI_API_KEY = "your-key"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 TOP_K = 5
-PDF_PATH = "/Users/sandeep/Downloads/Dummy Data Pdf - Sheet1.csv"
+PDF_PATH = "/Users/chayanchakraborty/Downloads/dummy-data.csv"
 FALL_BACK_DATA = {
         "products": [
             {
-                "ID": 1,
+                "ID": "1",
                 "name": "BWP Marine Plywood 18mm",
                 "type": "Plywood",
                 "properties": ['Category: Interior', 'Material: Softwood', 'Size: 8x4 ft', 'Waterproof: No', 'Termite-Proof: No', 'Fire-Rated: No', 'Usage: Furniture'],

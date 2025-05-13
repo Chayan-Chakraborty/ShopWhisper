@@ -27,7 +27,7 @@ class QueryRequest(BaseModel):
 
 @app.post("/product/load-fliter")
 def query_handler(request: QueryRequest, user_id: str = Header(..., alias="user-id")):
-    try:
+    # try:
         if request.question.lower() == "exit":
             return {"message": "Use /session/end to end the session."}
 
@@ -58,21 +58,21 @@ def query_handler(request: QueryRequest, user_id: str = Header(..., alias="user-
             "answer": parsed_answer
         })
 
-    except HTTPException as http_ex:
-        # Let FastAPI handle known HTTP exceptions
-        raise http_ex
-    except Exception as e:
-        # Fallback: return default product data from CSV
-        try:
-            return JSONResponse(content={
-            "user_id": user_id,
-            "question": request.question,
-            "answer": FALL_BACK_DATA
-        })
-        except Exception as fallback_error:
-            return JSONResponse(status_code=500, content={
-                "error": f"Critical failure: {str(e)} | Fallback also failed: {fallback_error}"
-            })
+    # except HTTPException as http_ex:
+    #     # Let FastAPI handle known HTTP exceptions
+    #     raise http_ex
+    # except Exception as e:
+    #     # Fallback: return default product data from CSV
+    #     try:
+    #         return JSONResponse(content={
+    #         "user_id": user_id,
+    #         "question": request.question,
+    #         "answer": FALL_BACK_DATA
+    #     })
+    #     except Exception as fallback_error:
+    #         return JSONResponse(status_code=500, content={
+    #             "error": f"Critical failure: {str(e)} | Fallback also failed: {fallback_error}"
+    #         })
 
 def convert_numpy_types(obj):
     if isinstance(obj, np.integer):

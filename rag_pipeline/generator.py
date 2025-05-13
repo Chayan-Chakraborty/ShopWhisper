@@ -12,7 +12,7 @@ class Product(BaseModel):
     type: str
     properties: List[str]
     wood_type: str
-    thickness: float
+    thickness: str
     dimensions: str
     color: str
     price: float
@@ -22,7 +22,7 @@ class Product(BaseModel):
     termite_resistant: bool
     recommended_for: List[str]
     rating: Optional[float]
-    discount: Optional[float]
+    discount: Optional[str]
     stock: bool
     isSponsored: bool
 
@@ -40,7 +40,7 @@ Ensure the following data types for each product field:
 - "type": string
 - "properties": array of strings
 - "wood_type": string
-- "thickness": number (in mm)
+- "thickness": string
 - "dimensions": string
 - "color": string
 - "price": number
@@ -50,7 +50,7 @@ Ensure the following data types for each product field:
 - "termite_resistant": boolean
 - "recommended_for": array of strings
 - "rating": number or null
-- "discount": number or null (percent without % symbol)
+- "discount": string or null (percent with % symbol)
 - "stock": boolean (true if stock > 0, false if 0)
 - "isSponsored": boolean
 
@@ -74,7 +74,7 @@ Return only a valid JSON object like this:
       "termite_resistant": true,
       "recommended_for": ["Bathrooms", "Boats"],
       "rating": 4.7,
-      "discount": 5,
+      "discount": "5%",
       "stock": true,
       "isSponsored": true
     }}

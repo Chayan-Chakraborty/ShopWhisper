@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import random
 from ai_analyzer import AIAnalyzer
 import json
-import openai
+from openai import OpenAI
+from config import OPENAI_API_KEY
 
 class RecommendationSystem:
     def __init__(self, data_path: str = "data/products.csv"):
@@ -109,7 +110,7 @@ class RecommendationSystem:
         try:
             print("Getting AI recommendations")
             # Get AI recommendations
-            client = openai.OpenAI()
+            client = OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[

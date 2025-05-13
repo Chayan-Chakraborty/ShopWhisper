@@ -3,6 +3,7 @@ import pandas as pd
 from typing import Dict, Any, List
 import json
 from config import OPENAI_API_KEY
+from pydantic import BaseModel
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -110,8 +111,21 @@ class AIAnalyzer:
         except Exception as e:
             print(f"Error in AI analysis: {str(e)}")
             return self._basic_analysis(user_orders)
+        
 
-    def get_recommendation_prompt(self, user_analysis: Dict[str, Any], available_products: List[Dict[str, Any]]) -> str:
+    class UserAnalysis(BaseModel):
+        product_id: int
+        product_name: str
+        category: str
+        brand: str
+        price: float
+        rating: float
+        discount: str
+        stock: int
+        confidence_score: float
+        reasons: List[str]
+
+    def get_recommendation_prompt(self, user_analysis: Dict[str, Any], available_products: List[Dict[str, Any]]) -> UserAnalysis:
         return f"""
         Based on this user analysis:
         {json.dumps(user_analysis, indent=2)}
@@ -119,16 +133,41 @@ class AIAnalyzer:
         And these available products:
         {json.dumps(available_products, indent=2)}
 
-        Return ONLY a valid JSON object in the following format:
+        Strictly Return JSON object in the following format:
         {{
             "recommendations": [
                 {{
                     "product_id": "1",
-                    "reasons": ["Matches user's preference for premium plywood", "From a preferred brand"],
-                    "confidence_score": 0.95
+                     "product_name": "Anti-Termite Adhesive 1kg",
+                    "category": "Adhesive",
+                    "brand": "Fevicol",
+                    "price": 28,
+                    "rating": 4.7,
+                    "discount": "0%",
+                    "stock": 80,
+                    "confidence_score": 0.3,
+                    "reasons": [
+                "Excellent customer rating of 4.7/5"
                 }}
             ]
         }}
+
+        Strictly follow the format and data types.
+
+        "product_id": 8,
+            "product_name": "Anti-Termite Adhesive 1kg",
+            "category": "Adhesive",
+            "brand": "Fevicol",
+            "price": 28,
+            "rating": 4.7,
+            "discount": "0%",
+            "stock": 80,
+            "confidence_score": 0.3,
+            "reasons": [
+                "Excellent customer rating of 4.7/5"
+        ]
+
+        Maintain consistent data types for each field.
 
         Important:
         1. The 'reasons' field must be a list of strings

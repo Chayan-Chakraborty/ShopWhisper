@@ -11,6 +11,8 @@ from recommendation_system import RecommendationSystem
 import pandas as pd
 import numpy as np
 from config import PDF_PATH
+import openai
+from config import FALL_BACK_DATA
 
 app = FastAPI()
 
@@ -25,33 +27,52 @@ class QueryRequest(BaseModel):
 
 @app.post("/product/load-fliter")
 def query_handler(request: QueryRequest, user_id: str = Header(..., alias="user-id")):
-    if request.question.lower() == "exit":
-        return {"message": "Use /session/end to end the session."}
-
-    # Load and split product data CSV
-    chunks = load_and_split_csv(PDF_PATH)
-
-    # Create or fetch user session
-    if user_id not in sessions:
-        sessions[user_id] = Retriever(chunks)
-
-    retriever = sessions[user_id]
-
-    relevant_chunks = retriever.get_relevant_chunks(request.question)
-    context = "\n\n".join(relevant_chunks)
-
-    answer = generate_answer(context, request.question)
-
     try:
-        parsed_answer = json.loads(answer)  # Convert JSON string to dict
-    except json.JSONDecodeError:
-        parsed_answer = {"raw_answer": answer}  # fallback if answer is not JSON
+        if request.question.lower() == "exit":
+            return {"message": "Use /session/end to end the session."}
 
-    return JSONResponse(content={
-        "user_id": user_id,
-        "question": request.question,
-        "answer": parsed_answer
-    })
+        chunks = load_and_split_csv(PDF_PATH)
+
+        if user_id not in sessions:
+            sessions[user_id] = Retriever(chunks)
+
+        retriever = sessions[user_id]
+        relevant_chunks = retriever.get_relevant_chunks(request.question)
+        context = "\n\n".join(relevant_chunks)
+
+        try:
+            answer = generate_answer(context, request.question)
+        except openai.error.AuthenticationError:
+            raise HTTPException(status_code=401, detail="Invalid or expired OpenAI API key.")
+        except openai.error.OpenAIError as e:
+            raise HTTPException(status_code=502, detail=f"OpenAI API error: {str(e)}")
+
+        try:
+            parsed_answer = json.loads(answer)
+        except json.JSONDecodeError:
+            parsed_answer = {"raw_answer": answer}
+
+        return JSONResponse(content={
+            "user_id": user_id,
+            "question": request.question,
+            "answer": parsed_answer
+        })
+
+    except HTTPException as http_ex:
+        # Let FastAPI handle known HTTP exceptions
+        raise http_ex
+    except Exception as e:
+        # Fallback: return default product data from CSV
+        try:
+            return JSONResponse(content={
+            "user_id": user_id,
+            "question": request.question,
+            "answer": FALL_BACK_DATA
+        })
+        except Exception as fallback_error:
+            return JSONResponse(status_code=500, content={
+                "error": f"Critical failure: {str(e)} | Fallback also failed: {fallback_error}"
+            })
 
 def convert_numpy_types(obj):
     if isinstance(obj, np.integer):

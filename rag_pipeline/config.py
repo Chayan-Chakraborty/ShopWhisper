@@ -1,9 +1,9 @@
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 TOP_K = 5
-PDF_PATH = "/Users/sandeep/Downloads/Dummy Data Pdf - Sheet1.csv"
+PDF_PATH = "/Users/chayanchakraborty/Downloads/dummy-data.csv"
 FALL_BACK_DATA = {
     "answer": {
         "products": [

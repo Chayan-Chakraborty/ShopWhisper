@@ -8,9 +8,10 @@ from ai_analyzer import AIAnalyzer
 import json
 from openai import OpenAI
 from config import OPENAI_API_KEY
+from config import PDF_PATH
 
 class RecommendationSystem:
-    def __init__(self, data_path: str = "data/products.csv"):
+    def __init__(self, data_path: str = PDF_PATH):
         try:
             # Load products directly from CSV
             print("Loading products from CSV...")
@@ -112,16 +113,14 @@ class RecommendationSystem:
             # Get AI recommendations
             client = OpenAI(api_key=OPENAI_API_KEY)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You are a retail recommendation expert."},
                     {"role": "user", "content": self.ai_analyzer.get_recommendation_prompt(
                         user_analysis,
                         self.products.to_dict('records')
                     )}
-                ],
-                temperature=0.7,
-                max_tokens=1000
+                ]
             )
             
             # Parse AI recommendations

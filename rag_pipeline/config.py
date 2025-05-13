@@ -1,4 +1,4 @@
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
@@ -12,12 +12,13 @@ FALL_BACK_DATA = {
                 "name": "BWP Marine Plywood 18mm",
                 "type": "Plywood",
                 "properties": {
-                    "sub-category": "Waterproof",
-                    "material": "Hardwood",
-                    "waterproof": "Yes",
-                    "termite_proof": "Yes",
-                    "fire_rated": "No",
-                    "usage": "Bathrooms, Boats"
+                    "Category": "Waterproof",
+                    "Material": "Hardwood",
+                    "Size": "8x4 ft",
+                    "Waterproof": "Yes",
+                    "Termite-Proof": "Yes",
+                    "Fire-Rated": "No",
+                    "Usage": "Bathrooms, Boats"
                 },
                 "wood_type": "Hardwood",
                 "thickness": "18mm",
@@ -25,7 +26,7 @@ FALL_BACK_DATA = {
                 "color": "Brown",
                 "price": 1650,
                 "brand": "GreenPly",
-                "eco_friendly": "Yes",
+                "eco_friendly": "No",
                 "fire_resistant": "No",
                 "termite_resistant": "Yes",
                 "recommended_for": "Bathrooms, Boats",
@@ -39,12 +40,13 @@ FALL_BACK_DATA = {
                 "name": "MR Commercial Plywood 12mm",
                 "type": "Plywood",
                 "properties": {
-                    "sub-category": "Interior",
-                    "material": "Softwood",
-                    "waterproof": "No",
-                    "termite_proof": "No",
-                    "fire_rated": "No",
-                    "usage": "Furniture"
+                    "Category": "Interior",
+                    "Material": "Softwood",
+                    "Size": "8x4 ft",
+                    "Waterproof": "No",
+                    "Termite-Proof": "No",
+                    "Fire-Rated": "No",
+                    "Usage": "Furniture"
                 },
                 "wood_type": "Softwood",
                 "thickness": "12mm",
@@ -66,12 +68,13 @@ FALL_BACK_DATA = {
                 "name": "Teak Veneer Plywood 19mm",
                 "type": "Plywood",
                 "properties": {
-                    "sub-category": "Premium",
-                    "material": "Teak",
-                    "waterproof": "Yes",
-                    "termite_proof": "Yes",
-                    "fire_rated": "Yes",
-                    "usage": "Luxury Furniture"
+                    "Category": "Premium",
+                    "Material": "Teak",
+                    "Size": "8x4 ft",
+                    "Waterproof": "Yes",
+                    "Termite-Proof": "Yes",
+                    "Fire-Rated": "Yes",
+                    "Usage": "Luxury Furniture"
                 },
                 "wood_type": "Teak",
                 "thickness": "19mm",
@@ -79,7 +82,7 @@ FALL_BACK_DATA = {
                 "color": "Golden",
                 "price": 2400,
                 "brand": "Kitply",
-                "eco_friendly": "Yes",
+                "eco_friendly": "No",
                 "fire_resistant": "Yes",
                 "termite_resistant": "Yes",
                 "recommended_for": "Luxury Furniture",

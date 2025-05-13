@@ -87,7 +87,7 @@ class AIAnalyzer:
                 max_tokens=1000
             )
 
-            response_text = response.choices[0].message['content'].strip()
+            response_text = response.choices[0].message.content.strip()
             if not response_text:
                 raise ValueError("Empty response from OpenAI API")
 
@@ -124,11 +124,17 @@ class AIAnalyzer:
             "recommendations": [
                 {{
                     "product_id": "1",
-                    "reasoning": "Matches user's preference for premium plywood",
+                    "reasons": ["Matches user's preference for premium plywood", "From a preferred brand"],
                     "confidence_score": 0.95
                 }}
             ]
         }}
+
+        Important:
+        1. The 'reasons' field must be a list of strings
+        2. Each recommendation must have at least one reason
+        3. Product IDs must match the available products
+        4. Confidence scores should be between 0 and 1
         """
 
     def _basic_analysis(self, user_orders: pd.DataFrame) -> Dict[str, Any]:

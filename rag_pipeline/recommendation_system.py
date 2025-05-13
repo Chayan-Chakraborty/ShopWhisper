@@ -130,17 +130,32 @@ class RecommendationSystem:
             # Convert to final format with multiple reasons
             recommendations = []
             for rec in ai_recommendations["recommendations"][:num_recommendations]:
-                product = self.products[self.products['ID'] == int(rec['product_id'])].iloc[0]
-                recommendations.append({
-                    'product_id': product['ID'],
-                    'product_name': product['Product_Name'],
-                    'category': product['Category'],
-                    'brand': product['Brand'],
-                    'price': product['Price'],
-                    'confidence_score': rec['confidence_score'],
-                    'reasons': rec['reasons'] if isinstance(rec['reasons'], list) else [rec['reasoning']]
-                })
+                try:
+                    product = self.products[self.products['ID'] == int(rec['product_id'])].iloc[0]
+                    
+                    # Ensure reasons is a list
+                    reasons = rec.get('reasons', [])
+                    if isinstance(reasons, str):
+                        reasons = [reasons]
+                    elif not isinstance(reasons, list):
+                        reasons = [str(reasons)]
+                    
+                    recommendations.append({
+                        'product_id': product['ID'],
+                        'product_name': product['Product Name'],
+                        'category': product['Category'],
+                        'brand': product['Brand'],
+                        'price': product['Price'],
+                        'confidence_score': float(rec.get('confidence_score', 0.5)),
+                        'reasons': reasons
+                    })
+                except (KeyError, ValueError, IndexError) as e:
+                    print(f"Error processing recommendation: {str(e)}")
+                    continue
             
+            if not recommendations:
+                raise ValueError("No valid recommendations generated")
+                
             print(f"Returning {len(recommendations)} AI recommendations")
             return recommendations
             
